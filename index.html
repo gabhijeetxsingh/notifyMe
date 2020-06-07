@@ -1,0 +1,74 @@
+<html>
+    <head>
+        <title>Notify</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
+        <style>
+            .outerbox {
+                flex-direction: column;
+                display: flex;
+                border: 14px solid greenyellow;
+                width: 20%;
+                align-items: center;
+                margin: auto;
+                padding-top: 50px;
+                padding-bottom: 50px;
+
+            }
+
+            .message-container {
+                width: 100%;
+                overflow: auto;
+                height: 150px;
+            }
+
+            .message {
+                border: 1px solid #d8d8d8;
+                padding: 6px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="outerbox">
+            <form>
+                <input id="message">
+                <button id="send">Send</button>
+            </form>
+            <div class="message-container">
+            </div>
+        </div>
+    </body>
+    <script>
+        let socket = io("http://localhost:3000/notify");
+
+        socket.on("recieve", (data) => {
+
+            let node = document.createElement("div");
+            node.classList.add("message")
+            let textnode = document.createTextNode(data.message);
+            node.appendChild(textnode);
+            document.querySelector(".message-container").appendChild(node);
+            notifyMe(data);
+        })
+
+        document.querySelector("form").addEventListener("submit" , (evt) => {
+            evt.preventDefault();
+            let message = document.querySelector("#message");
+            console.log(message.value)
+            socket.emit("sendnotification", {title : "Notify", message : message.value})
+            message.value = ""
+        });
+
+        const notifyMe = (data) => {
+            navigator.serviceWorker.register("sw.js");
+            Notification.requestPermission((result) => {
+                if(result === "granted") {
+                    navigator.serviceWorker.ready
+                    .then((registration) => {
+                        registration.showNotification(data.title, { body : data.message});
+                    })
+                }
+            })
+        }
+
+    </script>
+</html>
